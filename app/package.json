@@ -1,0 +1,24 @@
+{
+  "name": "gtfs-dtw-clustering",
+  "version": "1.0.0",
+  "type": "module",
+  "main": "server.mjs",
+  "scripts": {
+    "start": "node server.mjs",
+    "build": "npm run build:data-client",
+    "build:data-client": "esbuild public/data-client.mjs --bundle --format=esm --platform=browser --target=es2022 --outfile=public/data-client.bundle.mjs",
+    "build:static": "npm run build && node scripts/build-static.mjs",
+    "build:netlify-data": "node scripts/build-netlify-data.mjs",
+    "test": "node --test"
+  },
+  "description": "DTW clustering of Israeli GTFS routes by stop-distance vectors (DuckDB + Node worker threads)",
+  "dependencies": {
+    "@duckdb/duckdb-wasm": "1.29.0",
+    "@duckdb/node-api": "^1.5.6-r.1",
+    "express": "^5.3.0",
+    "leaflet": "^1.9.4"
+  },
+  "devDependencies": {
+    "esbuild": "0.28.2"
+  }
+}

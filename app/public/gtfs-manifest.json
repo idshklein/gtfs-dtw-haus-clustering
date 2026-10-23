@@ -1,0 +1,11 @@
+{
+  "version": "local-c7252aaee98305b42bb4f699026f577411c7b7efe",
+  "files": {
+    "agency": "/gtfs/agency.parquet",
+    "routes": "/gtfs/routes.parquet",
+    "shapes": "/gtfs/shapes.parquet",
+    "stops": "/gtfs/stops.parquet",
+    "stop_times": "/gtfs/stop_times.parquet",
+    "trips": "/gtfs/trips.parquet"
+  }
+}

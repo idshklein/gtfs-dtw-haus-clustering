@@ -1,0 +1,400 @@
+<!doctype html>
+<html lang="he" dir="rtl">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="gtfs-manifest" content="/gtfs-manifest.json">
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+  <title>קיבוץ קווי תחבורה ציבורית — מרחק האוסדורף ו-DTW</title>
+  <link rel="stylesheet" href="/vendor/leaflet/leaflet.css">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+<header>
+  <h1>קיבוץ קווים לפי פרופיל מרחקי עצירות (האוסדורף / DTW)</h1>
+  <div id="metaLine" class="muted"></div>
+</header>
+
+<div class="layout">
+  <aside>
+    <details class="control-stage" name="calculation-stage" open>
+      <summary>1. הגדרת הדגימות</summary>
+      <div class="control-stage-content">
+      <label>יחידת דגימה
+        <select id="unit">
+          <option value="route">קו (כל תבניות הנסיעה הייחודיות משורשרות לוקטור אחד)</option>
+          <option value="pattern">תבנית נסיעה ייחודית (וקטור לכל תבנית)</option>
+        </select>
+      </label>
+      <label id="featureWrap">איברי הווקטור
+        <select id="feature">
+          <option value="seg">מרחק בין עצירות עוקבות (מ')</option>
+          <option value="cum">shape_dist_traveled מצטבר (מ')</option>
+        </select>
+      </label>
+      <label>נרמול ערכים לפני חישוב מרחק
+        <select id="normalize">
+          <option value="none" selected>ללא (מטרים)</option>
+          <option value="log">log(1+x) (מרסן חריגים)</option>
+          <option value="zscore">z-score לכל וקטור (צורה בלבד)</option>
+        </select>
+      </label>
+      <label>סוכנויות (ללא בחירה = הכול)
+        <select id="agencies" multiple size="6"></select>
+      </label>
+      <label>סוגי קו
+        <select id="routeTypes" multiple size="4"></select>
+      </label>
+      <div class="row">
+        <label>אורך וקטור מינימלי <input id="minLen" type="number" min="0" value="0"></label>
+      </div>
+      <div id="sampleInfo" class="muted"></div>
+      <details id="shareConfigPanel" class="share-config">
+        <summary>שיתוף תצורה בקישור</summary>
+        <p class="muted">הקישור כולל מסננים והגדרות חישוב בלבד, כולל מונח החיפוש אם הוזן. אין לכלול מידע רגיש; תוצאות אינן נשמרות בקישור.</p>
+        <div class="row">
+          <button type="button" id="createShareUrl">צור קישור</button>
+          <button type="button" id="copyShareUrl" disabled>העתק קישור</button>
+        </div>
+        <textarea id="shareUrl" rows="3" readonly hidden aria-label="קישור לשיתוף התצורה"></textarea>
+        <div id="shareStatus" class="muted" role="status" aria-live="polite"></div>
+      </details>
+      </div>
+    </details>
+
+    <details id="distanceStage" class="control-stage" name="calculation-stage">
+      <summary>2. חישוב מטריצת מרחקים</summary>
+      <div class="control-stage-content">
+      <label>מדד מרחק (מתודולוגיה)
+        <select id="metric">
+          <option value="hausdorff_profile_wmhd" selected>האוסדורף פרופיל מרווחים (m_k, s_k) משוקלל-אורך (WMHD במטרים — מומלץ)</option>
+          <option value="hausdorff_profile_quantile">האוסדורף פרופיל מרווחים (m_k, s_k) אחוזוני (H_q במטרים)</option>
+          <option value="hausdorff_profile_max">האוסדורף פרופיל מרווחים (m_k, s_k) קלאסי (Max במטרים)</option>
+          <option value="hausdorff_1d">האוסדורף 1D על מיקומי תחנות cum (במטרים, O(n+m))</option>
+          <option value="hausdorff_norm2d">האוסדורף 2D מנורמל [0,1]² (עקומת ריכוז תחנות / Lévy)</option>
+          <option value="frechet">מרחק Fréchet בדיד (האוסדורף שומר-סדר)</option>
+          <option value="dtw">DTW (Dynamic Time Warping)</option>
+        </select>
+      </label>
+      <div id="metricHint" class="metric-hint muted"></div>
+      <div id="hausdorffWrap" class="row">
+        <label id="posWeightWrap">משקל מיקום לאורך הקו (λ) <input id="posWeight" type="number" min="0" max="2" step="0.05" value="0.25"></label>
+        <label id="quantileWrap" hidden>אחוזון האוסדורף q (%) <input id="quantilePct" type="number" min="50" max="100" step="1" value="90"></label>
+      </div>
+      <div class="row">
+        <label id="windowWrap" hidden>חלון Sakoe-Chiba (%) <input id="windowPct" type="number" min="0" max="100" value="10"></label>
+        <label>Workers ל-CPU/fallback <input id="workers" type="number" min="1" value="2"></label>
+      </div>
+      <label id="lenNormWrap" class="check" hidden><input id="lenNorm" type="checkbox" checked> חלוקת המרחק באורכי הוקטורים (n+m)</label>
+      <label>מנוע חישוב
+        <select id="computeBackend">
+          <option value="cpu" selected>CPU — ברירת מחדל</option>
+          <option value="webgpu">WebGPU — WMHD בלבד, עם fallback ל-CPU</option>
+        </select>
+      </label>
+      <div id="computeBackendInfo" class="muted">CPU הוא מסלול ברירת המחדל. WebGPU ניסיוני וזמין רק למדד WMHD.</div>
+      <label>ממדי MDS לחישוב
+        <select id="mdsDims">
+          <option value="2">2</option>
+          <option value="3">3</option>
+          <option value="4">4</option>
+          <option value="5">5</option>
+          <option value="6" selected>6</option>
+          <option value="7">7</option>
+          <option value="8">8</option>
+          <option value="9">9</option>
+          <option value="10">10</option>
+        </select>
+      </label>
+      <div class="muted">כל הממדים שנבחרו נשמרים לניתוח; מפת הנקודות מציגה רק את שני הצירים המובילים. k-medoids וכל יתר הקיבוץ פועלים על מטריצת המרחק המלאה, לא על היטל התצוגה.</div>
+      <div class="row">
+        <button id="runDtw" class="primary">חשב</button>
+        <button id="cancelDtw" disabled>בטל</button>
+      </div>
+      <div id="workloadEstimate" class="workload-estimate muted" aria-live="polite">מחשב אומדן לפי המסננים...</div>
+      </div>
+    </details>
+
+    <details id="clusterSection" class="control-stage disabled" name="calculation-stage">
+      <summary>3. קיבוץ</summary>
+      <div class="control-stage-content">
+      <label>אלגוריתם
+        <select id="algo">
+          <option value="kmedoids">k-medoids</option>
+          <option value="hierarchical" selected>היררכי</option>
+          <option value="dbscan">DBSCAN</option>
+        </select>
+      </label>
+      <label id="linkageWrap">Linkage
+        <select id="linkage">
+          <option value="average">average</option>
+          <option value="complete" selected>complete</option>
+          <option value="single">single</option>
+        </select>
+      </label>
+      <label id="cutModeWrap" hidden>חיתוך היררכי
+        <select id="cutMode">
+          <option value="k">לפי מספר אשכולות k</option>
+          <option value="h">לפי גובה h</option>
+          <option value="info-k" selected>אינפורמציה פנימית עד k</option>
+          <option value="info-tau">אינפורמציה פנימית עד סף τ</option>
+          <option value="info-frac">אינפורמציה פנימית לפי שימור מידע</option>
+        </select>
+      </label>
+      <div id="kWrap">
+        <label id="autoWrap" class="check"><input id="auto" type="checkbox"> בחירת k אוטומטית (silhouette)</label>
+        <div class="row">
+          <label>k <input id="k" type="number" min="1" value="20"></label>
+          <label>טווח אוטומטי: מ- <input id="kMin" type="number" min="2" max="39" value="3"></label>
+          <label>עד <input id="kMax" type="number" min="2" max="40" value="15"></label>
+        </div>
+      </div>
+      <div id="cutHWrap" hidden>
+        <label>גובה חיתוך h <input id="cutH" type="number" min="0" step="any" value="0"></label>
+      </div>
+      <div id="cutInfoWrap" hidden>
+        <div id="cutTauWrap">
+          <label>סף מידע פנימי τ (ביטים) <input id="cutTau" type="number" min="0" step="any" value="0.01"></label>
+        </div>
+        <div id="cutFracWrap">
+          <label>שיעור מידע לשימור f (0–1) <input id="cutFrac" type="number" min="0" max="1" step="0.01" value="0.9"></label>
+        </div>
+        <div class="muted">לכל קו משקל אחיד; Y מוגדר כהתפלגות אחידה בין ארבע תכונות הקו, כשכל תכונה מחולקת לחמישוני הנתונים.</div>
+      </div>
+      <div id="dbWrap" hidden>
+        <div class="row">
+          <label>eps <input id="eps" type="number" step="any" min="0"></label>
+          <label>minPts <input id="minPts" type="number" min="1" value="4"></label>
+        </div>
+        <div id="epsHints" class="muted"></div>
+      </div>
+      <div class="row">
+        <button id="runCluster" class="primary">קבץ</button>
+        <button id="cancelCluster" disabled>בטל קיבוץ</button>
+      </div>
+      </div>
+    </details>
+  </aside>
+
+  <main>
+    <section class="activity-status" aria-label="מצב טעינה וחישוב">
+      <div id="statusLine" class="muted" role="status" aria-live="polite"></div>
+      <div class="progress" role="progressbar" aria-label="התקדמות חישוב מטריצת המרחקים" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"><div id="bar"></div></div>
+      <div id="clusterStatus" class="muted" role="status" aria-live="polite"></div>
+    </section>
+    <nav class="tabs">
+      <button data-tab="clusters" class="active">אשכולות</button>
+      <button data-tab="methodology">המחשת מתודולוגיות מרחק</button>
+      <button data-tab="map">מפת קווים</button>
+      <button data-tab="data">נתונים</button>
+      <button id="tabButton-profiles" data-tab="profiles" disabled>וקטורים לפי אשכול</button>
+      <button id="tabButton-investigation" data-tab="investigation" disabled>תחקור קו</button>
+    </nav>
+
+    <div id="tab-clusters">
+      <nav class="cluster-view-tabs" aria-label="תצוגות תוצאות אשכולות">
+        <button type="button" class="active" data-cluster-view="overview" aria-pressed="true">מפת דגימות וטבלת אשכולות</button>
+        <button type="button" data-cluster-view="variance" aria-pressed="false">שונות MDS</button>
+        <button type="button" data-cluster-view="correlations" aria-pressed="false">מתאמים</button>
+        <button type="button" id="clusterViewDendrogram" data-cluster-view="dendrogram" aria-pressed="false" hidden>דנדוגרמה</button>
+      </nav>
+
+      <div id="cluster-view-overview" class="cluster-view-panel">
+        <div class="cluster-overview-layout">
+        <div class="card scatter-card">
+          <h3 id="scatterTitle">מפת דגימות (MDS דו-ממדי של מטריצת המרחקים)</h3>
+          <canvas id="scatter" width="760" height="520"></canvas>
+          <div id="tip" class="tip" hidden></div>
+        </div>
+          <div class="card cluster-table-card">
+            <h3>אשכולות <span id="silLine" class="muted"></span></h3>
+            <canvas id="silcurve" width="500" height="140" hidden></canvas>
+            <div id="clusterTableWrap">
+              <table id="clusterTable"><thead><tr>
+                <th></th><th>#</th><th>גודל</th><th>silhouette</th><th>נציג (medoid)</th><th>אורך וקטור חציוני</th>
+              </tr></thead><tbody></tbody></table>
+            </div>
+          </div>
+      </div>
+      </div>
+      <div id="cluster-view-variance" class="cluster-view-panel" hidden>
+        <div class="card">
+          <h3>שונות מוסברת ב-MDS</h3>
+          <div id="mdsVariance" class="muted">השונות תוצג לאחר חישוב.</div>
+          <canvas id="mdsVariancePlot" width="1000" height="280" role="img" aria-label="גרף עמודות של השונות המוסברת לפי ציר MDS"></canvas>
+        </div>
+      </div>
+      <div id="cluster-view-correlations" class="cluster-view-panel" hidden>
+        <div class="card">
+          <h3>מתאם בין צירי MDS לתכונות הקו</h3>
+          <div class="muted">כל חלונית מציגה את כל הדגימות; הנקודות צבועות לפי אשכול. מקדמי Pearson ו-Spearman מחושבים על כלל הדגימות.</div>
+          <canvas id="correlationPlot" width="1000" height="400"></canvas>
+          <div id="correlationLegend" class="cluster-legend muted" aria-label="מקרא אשכולות בגרפי המתאם"></div>
+        </div>
+      </div>
+      <div id="cluster-view-dendrogram" class="cluster-view-panel" hidden>
+        <div class="card dendrogram-card" id="dendrogramCard" hidden>
+          <h3>דנדוגרמה — חיתוך נבחר</h3>
+          <div id="dendrogramInfo" class="muted"></div>
+          <canvas id="dendrogram" width="1000" height="400"></canvas>
+          <div id="dendrogramTip" class="muted" aria-live="polite"></div>
+        </div>
+      </div>
+    </div>
+
+    <div id="tab-profiles" hidden>
+      <div class="card">
+        <div class="profiles-toolbar">
+          <div>
+            <h2>וקטורים ופרופילי קווים לפי אשכול</h2>
+            <div id="profilesSubtitle" class="muted">כל פרופילי האשכול מוצגים; הנציג מודגש. בשוליים: התפלגויות אורך המסלול ומספר התחנות לכל תבנית.</div>
+          </div>
+          <div class="profiles-controls">
+            <label>ייצוג פרופיל בגרף
+              <select id="profileViewMode">
+                <option value="spacing">פרופיל מרווחים מקומי (m_k, s_k) במטרים — יחידות אחידות</option>
+                <option value="sawtooth">פרופיל מרחק לתחנה קרובה R(x) במטרים — יחידות אחידות</option>
+                <option value="norm2d">עקומת ריכוז תחנות מנורמלת [0,1]² — יחידות אחידות</option>
+                <option value="cumulative" selected>פרופיל מצטבר עם התפלגויות שוליות (מרחק, תחנות)</option>
+              </select>
+            </label>
+            <label id="profileClipWrap" class="check">
+              <input id="profileClipOutliers" type="checkbox" checked> קיטום שיאי קצה חריגים בציר Y (אחוזון 98%)
+            </label>
+          </div>
+        </div>
+      </div>
+      <div id="clusterFacets" class="cluster-facets"></div>
+    </div>
+
+    <div id="tab-investigation" hidden>
+      <section id="detailPanel" class="detail-panel empty-detail">
+        <div class="detail-empty">בחרו קו במפה, במפת הדגימות או בטבלת הנתונים כדי להתחיל בתחקור.</div>
+      </section>
+    </div>
+
+    <div id="tab-methodology" hidden>
+      <div class="card meth-top-card">
+        <div class="meth-header-row">
+          <div>
+            <h2>המחשה ויזואלית של 6 שיטות המרחק — הסבר שלב-אחר-שלב לכל שיטה בנפרד</h2>
+            <div class="muted">בחרו אחת מ-6 שיטות המרחק למטה. לכל שיטה מוצג תהליך מפורט ב-4 שלבים המתחיל תמיד בגרף הפשוט של הפרופיל המצטבר (dᵢ, i), מדגים באנימציה את המניפולציה על הצירים, ומראה כיצד מחושב המרחק הסופי.</div>
+          </div>
+          <div class="meth-pair-legend">
+            <span><i class="meth-line-swatch meth-swatch-a"></i> <strong id="methLabelA">קו א׳</strong></span>
+            <span><i class="meth-line-swatch meth-swatch-b"></i> <strong id="methLabelB">קו ב׳</strong></span>
+          </div>
+        </div>
+
+        <div class="meth-controls-grid">
+          <label>צמד פרופילים להשוואה (דוגמה או קווים אמיתיים)
+            <select id="methPreset">
+              <option value="drift" selected>תרחיש 1 (הזזת אינדקס): קו רגיל מול קו עם 6 תחנות איסוף צפופות בתחילת המסלול (וזהים בהמשך)</option>
+              <option value="express">תרחיש 2 (דילוג תחנות וכביש מהיר): שני קווים בינעירוניים עם מקטע מהיר בהזזה של 600 מ׳</option>
+              <option value="outlier">תרחיש 3 (תחנת קצה חריגה): שני קווים עירוניים דומים שלקו ב׳ נוספה תחנת מסוף מרוחקת</option>
+              <option value="scale">תרחיש 4 (הבדל קנה-מידה): אותה צורת פיזור תחנות בדיוק באורך 6 ק״מ מול 12 ק״מ</option>
+              <option value="gtfs">בחירת שני קווים אמיתיים מתוך נתוני ה-GTFS</option>
+            </select>
+          </label>
+          <label>משקל מיקום לאורך הקו (λ): <strong id="methLambdaVal">0.25</strong>
+            <input id="methLambda" type="range" min="0" max="1" step="0.05" value="0.25">
+          </label>
+          <label>אחוזון האוסדורף (q): <strong id="methQuantileVal">90%</strong>
+            <input id="methQuantile" type="range" min="50" max="100" step="5" value="90">
+          </label>
+        </div>
+
+        <div id="methGtfsPickers" class="meth-gtfs-row" hidden>
+          <label class="meth-route-search">חיפוש לפי מספר קו (short_route_name)
+            <input id="methRouteSearch" type="search" placeholder="הקלידו מספר קו, למשל 18" autocomplete="off">
+          </label>
+          <div id="methRouteSearchInfo" class="muted" aria-live="polite">חיפוש במספר הקו יסנן את אפשרויות הבחירה.</div>
+          <label>קו א׳ מנתוני ה-GTFS
+            <select id="methSampleA"></select>
+          </label>
+          <label>קו ב׳ מנתוני ה-GTFS
+            <select id="methSampleB"></select>
+          </label>
+          <button id="methUseSelectedCluster" type="button">טען קו נבחר מול נציג האשכול שלו</button>
+        </div>
+      </div>
+
+      <div class="card meth-selector-card">
+        <h3>א. בחרו שיטת מרחק להמחשה (6 שיטות שונות — לחצו על שיטה כדי לראות את שלבי הפעולה שלה):</h3>
+        <div id="methSummaryGrid" class="meth-summary-grid"></div>
+      </div>
+
+      <div class="card meth-stage-card">
+        <div class="meth-stage-header">
+          <div>
+            <div class="meth-active-method-tag" id="methMethodTag">שיטה 1 מתוך 6</div>
+            <h3 id="methMethodHeaderTitle"></h3>
+          </div>
+          <div class="meth-final-pill" id="methFinalScorePill"></div>
+        </div>
+
+        <div class="meth-stepper" id="methStepper"></div>
+
+        <div class="meth-nav-bar">
+          <div class="meth-nav-buttons">
+            <button type="button" id="methPrevBtn">▶ שלב קודם בשיטה</button>
+            <button type="button" id="methNextBtn" class="primary">שלב הבא בשיטה ◀</button>
+            <button type="button" id="methReplayBtn">נגן אנימציית מעבר בין השלבים</button>
+          </div>
+          <label class="meth-morph-label">מעבר הדרגתי מהשלב הקודם: <strong id="methMorphPct">100%</strong>
+            <input id="methMorph" type="range" min="0" max="100" step="1" value="100">
+          </label>
+        </div>
+
+        <div class="meth-main-layout">
+          <div class="meth-canvas-wrap">
+            <canvas id="methMainCanvas" width="900" height="440"></canvas>
+          </div>
+          <aside class="meth-explain-box">
+            <div class="meth-step-badge" id="methStepBadge"></div>
+            <h3 id="methStepTitle"></h3>
+            <div id="methAxisBadge" class="meth-axis-badge"></div>
+            <div id="methStepBody" class="meth-step-body"></div>
+            <div id="methStepMetricBox" class="meth-metric-highlight"></div>
+          </aside>
+        </div>
+      </div>
+    </div>
+
+    <div id="tab-map" hidden>
+      <section class="map-toolbar">
+        <div>
+          <h2>מפת מסלולים לפי אשכול</h2>
+          <div id="mapInfo" class="muted">הריצו DTW וקיבוץ כדי לצבוע מסלולים לפי אשכול.</div>
+          <div id="mapTileStatus" class="muted" role="status" aria-live="polite"></div>
+        </div>
+        <button id="fitMap">התאם את המפה לקווים</button>
+      </section>
+      <div class="map-layout">
+        <div class="card map-card"><div id="routeMap" role="img" aria-label="מפת מסלולי התחבורה"></div></div>
+        <aside class="card map-side">
+          <h3>אשכולות</h3>
+          <div id="mapLegend" class="map-legend"></div>
+          <div id="mapRouteDetail" class="map-route-detail muted">לחצו על מסלול במפה או בחרו קו בטבלת האשכולות.</div>
+        </aside>
+      </div>
+    </div>
+
+    <div id="tab-data" hidden>
+      <div class="card">
+        <div class="row">
+          <label>חיפוש קו <input id="search" placeholder="מספר או שם"></label>
+          <button id="reloadData">רענן</button>
+          <span id="dataInfo" class="muted"></span>
+        </div>
+        <table id="dataTable"><thead><tr>
+          <th>קו</th><th>שם</th><th>סוכנות</th><th>סוג</th><th>תבניות</th><th>נסיעות</th><th>אורך וקטור</th><th>מרחק כולל (מ')</th>
+        </tr></thead><tbody></tbody></table>
+      </div>
+    </div>
+  </main>
+</div>
+<script src="/vendor/leaflet/leaflet.js"></script>
+<script src="app.js"></script>
+</body>
+</html>

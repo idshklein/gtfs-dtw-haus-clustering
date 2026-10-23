@@ -1,0 +1,275 @@
+{
+  "createdAt": "2026-10-20",
+  "purpose": "Gate 0 local reference snapshot and repeatable baseline scenarios",
+  "application": {
+    "gitRepository": false,
+    "node": "v22.14.0",
+    "npm": "10.9.2",
+    "dependencies": {
+      "@duckdb/node-api": "1.5.6-r.1",
+      "express": "5.3.0",
+      "leaflet": "1.9.4"
+    }
+  },
+  "dataset": {
+    "source": "Local workspace snapshot; remote Parquet server URL was not provided",
+    "localPath": "C:\\Users\\idshk\\uvs\\dtw_test\\israel-public-transportation-parquet",
+    "fileTimestampUtc": "2026-10-16",
+    "totalBytes": 132522878,
+    "totalMiB": 126.38,
+    "manifestSha256": "C7252AAEE98305B42BB4F699026F577411C7B7EFEFD71A9784C9D42E26E19665",
+    "manifestDefinition": "SHA-256 of UTF-8 text containing alphabetically sorted lines formatted as '<filename> <file-sha256>', joined with LF and no trailing newline",
+    "remoteAccessVerified": false,
+    "remoteAccessNote": "CORS, Range, authentication, cache behavior, and stable URLs remain unverified until the remote source URL is provided",
+    "files": [
+      {
+        "name": "agency.parquet",
+        "bytes": 2352,
+        "sha256": "58FA40906750F900C7093112BA912106F7347FD53E4EFF7CC3C5C6DAC67289C9"
+      },
+      {
+        "name": "calendar.parquet",
+        "bytes": 87838,
+        "sha256": "F31459245A9B3DD81BD9059744F488ED02C8DC12A82403444EEC0402CCF16AAE"
+      },
+      {
+        "name": "fare_attributes.parquet",
+        "bytes": 1244,
+        "sha256": "4DDB6BDFEC023B04CC088F88F9487065F790A11864BFAD4DA9D4A009D07F42F5"
+      },
+      {
+        "name": "fare_rules.parquet",
+        "bytes": 4483077,
+        "sha256": "4B44786541E189873587A91D1F20619143FCF0E12A46E34BF140E43EEBFC08DF"
+      },
+      {
+        "name": "routes.parquet",
+        "bytes": 160829,
+        "sha256": "3C3B402A90929910D918B2B81F37A1E98F221ACFDEFC59F1528F2B88C75F58E1"
+      },
+      {
+        "name": "shapes.parquet",
+        "bytes": 32447711,
+        "sha256": "695A88335393683B5CC3D182BE01979534E1E4E7FB7936B21385443C7DD61875"
+      },
+      {
+        "name": "stop_times.parquet",
+        "bytes": 90923439,
+        "sha256": "FAF78A5221115C8EFF67DE935BA0F51B031A6768A6CC00BF67BC7E78DF49A3DD"
+      },
+      {
+        "name": "stops.parquet",
+        "bytes": 1023038,
+        "sha256": "50C969C71FC226FD64B710C724E09BA09E72261FF7E5029B2461473A08524E2A"
+      },
+      {
+        "name": "translations.parquet",
+        "bytes": 1345089,
+        "sha256": "CA725FE39CE386E2ED9B5BF47F89C900A2FF91F59DC707EFDC43E3CA085F6831"
+      },
+      {
+        "name": "trips.parquet",
+        "bytes": 2048261,
+        "sha256": "B39AB986B299BD7588446A8EDA7234CF9C0238E7AE0E9AA5797EE87A50D3B1D0"
+      }
+    ]
+  },
+  "referenceEnvironment": {
+    "os": "Windows 11 Home 10.0.26300",
+    "browser": "Chrome 155.0.0.0",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36",
+    "hardwareConcurrency": 20,
+    "deviceMemoryGB": 32,
+    "viewport": "1920x889",
+    "network": "localhost; remote network performance not measured"
+  },
+  "dataCounts": {
+    "routes": 7717,
+    "patterns": 7974,
+    "patternsWithoutShapeDistTraveled": 1091,
+    "routeSamples": 6629,
+    "patternSamples": 6883,
+    "medianRouteSegments": 32,
+    "maxRouteSegments": 159
+  },
+  "startupMeasurements": {
+    "serverDataPreparationMs": 5500,
+    "browserNavigation": {
+      "domContentLoadedMs": 205,
+      "loadMs": 213,
+      "documentTransferBytes": 16332
+    },
+    "browserApiRequests": {
+      "metaMs": 7,
+      "samplesMs": 35,
+      "statusMs": 5
+    },
+    "jsHeap": {
+      "usedBytes": 2775429,
+      "totalBytes": 3480149,
+      "note": "Does not include Node, DuckDB, or worker memory"
+    },
+    "console": {
+      "favicon404": true,
+      "otherErrors": false
+    }
+  },
+  "repeatableScenario": {
+    "unit": "route",
+    "feature": "seg",
+    "agencyIds": [
+      "22"
+    ],
+    "routeTypes": [],
+    "minLen": 0,
+    "workers": 1,
+    "normalize": "none",
+    "posWeight": 0.25,
+    "quantilePct": 90,
+    "windowPct": 10,
+    "lenNorm": true,
+    "routeSampleIds": [
+      "34447",
+      "34448",
+      "34445",
+      "34446",
+      "34449",
+      "34450"
+    ],
+    "patternSampleIds": [
+      "34447#1",
+      "34448#1",
+      "34445#1",
+      "34446#1",
+      "34449#1",
+      "34450#1"
+    ],
+    "note": "Distance matrix and MDS sample order is sorted by sample_id: 34445, 34446, 34447, 34448, 34449, 34450."
+  },
+  "selectedPairDistances": {
+    "sampleIds": [
+      "34447",
+      "34448"
+    ],
+    "computedFrom": "app/lib/core.mjs using the baseline configuration above",
+    "values": {
+      "hausdorff_profile_wmhd": 264.53777116864944,
+      "hausdorff_profile_quantile": 627.5,
+      "hausdorff_profile_max": 706,
+      "hausdorff_1d": 375,
+      "hausdorff_norm2d": 0.1175986308003691,
+      "frechet": 703,
+      "dtw": 121.2258064516129
+    },
+    "comparisonTolerance": 0.0001
+  },
+  "acceleratorTolerance": {
+    "metric": "hausdorff_profile_wmhd",
+    "unit": "m",
+    "absolute": 0.06,
+    "rationale": "User-approved absolute deviation for the WebGPU WMHD feasibility check; the 0.0001 CPU reference tolerance remains unchanged for all baseline metrics."
+  },
+  "selectedPairInputs": [
+    {
+      "sampleId": "34447",
+      "seg": [428, 508, 561, 517, 531, 764, 1359, 1482, 1116, 1118, 617, 730, 808, 766, 827, 1273, 681, 459, 479, 453, 407, 780, 633, 499, 672, 533, 379, 387, 595, 619, 448],
+      "cum": [0, 428, 936, 1497, 2014, 2545, 3309, 4668, 6150, 7266, 8384, 9001, 9731, 10539, 11305, 12132, 13405, 14086, 14545, 15024, 15477, 15884, 16664, 17297, 17796, 18468, 19001, 19380, 19767, 20362, 20981, 21429],
+      "mid": [214, 682, 1216.5, 1755.5, 2279.5, 2927, 3988.5, 5409, 6708, 7825, 8692.5, 9366, 10135, 10922, 11718.5, 12768.5, 13745.5, 14315.5, 14784.5, 15250.5, 15680.5, 16274, 16980.5, 17546.5, 18132, 18734.5, 19190.5, 19573.5, 20064.5, 20671.5, 21205]
+    },
+    {
+      "sampleId": "34448",
+      "seg": [454, 611, 592, 387, 380, 538, 674, 496, 634, 781, 406, 459, 484, 460, 678, 1274, 824, 768, 807, 731, 617, 1115, 1113, 1483, 1368, 772, 534, 517, 558, 496, 424],
+      "cum": [0, 454, 1065, 1657, 2044, 2424, 2962, 3636, 4132, 4766, 5547, 5953, 6412, 6896, 7356, 8034, 9308, 10132, 10900, 11707, 12438, 13055, 14170, 15283, 16766, 18134, 18906, 19440, 19957, 20515, 21011, 21435],
+      "mid": [227, 759.5, 1361, 1850.5, 2234, 2693, 3299, 3884, 4449, 5156.5, 5750, 6182.5, 6654, 7126, 7695, 8671, 9720, 10516, 11303.5, 12072.5, 12746.5, 13612.5, 14726.5, 16024.5, 17450, 18520, 19173, 19698.5, 20236, 20763, 21223]
+    }
+  ],
+  "metricRuns": [
+    {
+      "metric": "hausdorff_profile_wmhd",
+      "totalMs": 155,
+      "distanceQuantiles": [264.53778076171875, 264.53778076171875, 264.53778076171875, 264.53778076171875, 392.284423828125, 410.5, 2002.25],
+      "mdsEigenvalues": [6643434.019214566, 104896.65271524432],
+      "mdsAxisRatio": 0.015789522769678377,
+      "mdsPointsXY": [-521.6502685546875, -229.10174560546875, -528.288330078125, 228.9294891357422, -942.6404418945312, -0.24355961382389069, -944.1561889648438, -0.24439072608947754, 1471.291259765625, 0.3340924084186554, 1465.444091796875, 0.32610616087913513]
+    },
+    {
+      "metric": "hausdorff_profile_quantile",
+      "totalMs": 181,
+      "distanceQuantiles": [497, 497, 497, 497, 627.5, 703, 2002.25],
+      "mdsEigenvalues": [6450956.12456309, 341505.496965584],
+      "mdsAxisRatio": 0.052938741230194535,
+      "mdsPointsXY": [-501.260498046875, 394.4959716796875, -500.9372253417969, -427.2795104980469, -941.7056884765625, 51.66229248046875, -944.1673583984375, -24.963104248046875, 1447.0247802734375, 3.093892812728882, 1441.0460205078125, 2.9904696941375732]
+    },
+    {
+      "metric": "hausdorff_profile_max",
+      "totalMs": 163,
+      "distanceQuantiles": [506, 506, 506, 506, 706, 955.25, 2008.75],
+      "mdsEigenvalues": [6998142.528357567, 629295.6212217754],
+      "mdsAxisRatio": 0.08992323586891396,
+      "mdsPointsXY": [-534.6409912109375, 575.6050415039062, -408.7926025390625, -462.65557861328125, -1027.3524169921875, 129.77932739257812, -1015.1516723632812, -246.092041015625, 1467.554931640625, 58.75452423095703, 1518.3829345703125, -55.391292572021484]
+    },
+    {
+      "metric": "hausdorff_1d",
+      "totalMs": 131,
+      "distanceQuantiles": [353, 353, 353, 353, 375, 530, 3525],
+      "mdsEigenvalues": [64042643.87246964, 196824.1643098456],
+      "mdsAxisRatio": 0.0030733297754194605,
+      "mdsPointsXY": [-2032.869873046875, -351.26593017578125, -129.57723999023438, 140.50889587402344, -3260.172607421875, -18.298622131347656, -3321.63818359375, 228.4375762939453, 4383.61474609375, 24.546157836914062, 4360.642578125, -23.928083419799805]
+    },
+    {
+      "metric": "hausdorff_norm2d",
+      "totalMs": 173,
+      "distanceQuantiles": [0.07251184433698654, 0.07251184433698654, 0.07251184433698654, 0.07251184433698654, 0.07272274047136307, 0.07701735198497772, 0.13750265538692474],
+      "mdsEigenvalues": [0.03671830294817824, 0.004904861295760462],
+      "mdsAxisRatio": 0.1335808275966037,
+      "mdsPointsXY": [-0.10374116897583008, 0.007150483317673206, 0.10358769446611404, 0.007389230653643608, -0.05533741042017937, 0.030781710520386696, 0.05489630252122879, 0.030841602012515068, -0.06734017282700295, -0.038150254637002945, 0.06793476641178131, -0.03801277279853821]
+    },
+    {
+      "metric": "frechet",
+      "totalMs": 149,
+      "distanceQuantiles": [491, 491, 491, 491, 703, 819, 1307],
+      "mdsEigenvalues": [1635542.5253167576, 1122012.5363420225],
+      "mdsAxisRatio": 0.6860185650781051,
+      "mdsPointsXY": [204.80563354492188, 670.2567749023438, 233.98435974121094, -658.79541015625, -720.2577514648438, -49.377071380615234, -720.03466796875, 26.43653106689453, 492.8811950683594, 348.9262390136719, 508.62127685546875, -337.447021484375]
+    },
+    {
+      "metric": "dtw",
+      "totalMs": 149,
+      "distanceQuantiles": [84.52631378173828, 84.52631378173828, 84.52631378173828, 84.52631378173828, 86.14035034179688, 120.48648834228516, 168.14035034179688],
+      "mdsEigenvalues": [44528.218068517395, 33106.26378036836],
+      "mdsAxisRatio": 0.7434895267856081,
+      "mdsPointsXY": [-13.958338737487793, 101.81214141845703, -7.70433235168457, -103.64086151123047, -99.94859313964844, 47.167510986328125, -99.33573913574219, -50.45004653930664, 108.48255157470703, 62.62259292602539, 112.4644546508789, -57.51132583618164]
+    }
+  ],
+  "otherScenarios": {
+    "routeCountForAgency22": 6,
+    "patternCountForAgency22": 6,
+    "routeLengthsForAgency22": [31, 31, 26, 26, 11, 11],
+    "routeNameSearch": {
+      "query": "1",
+      "resultCount": 2
+    },
+    "sampleDetail": {
+      "id": "34447",
+      "vectorLength": 31,
+      "patternCount": 1,
+      "firstStop": "תחנה מרכזית פתח תקווה",
+      "lastStop": "הקוממיות"
+    },
+    "vectorRows": 6,
+    "hierarchicalClustering": {
+      "linkage": "average",
+      "k": 2,
+      "sampleOrder": ["34445", "34446", "34447", "34448", "34449", "34450"],
+      "labels": [0, 0, 0, 0, 1, 1],
+      "silhouette": 0.25631265086643124
+    },
+    "mapShapeRows": 6
+  },
+  "initialBrowserNetwork": {
+    "meta": 200,
+    "samples": 200,
+    "status": 200,
+    "favicon": 404
+  }
+}

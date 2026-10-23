@@ -1,0 +1,19 @@
+# Local dependencies and generated deployment output
+**/node_modules/
+/app/dist/
+/app/data-deploy/
+/app/public/data-client.bundle.mjs
+/.netlify/
+
+# Local GTFS snapshots stay out of GitHub
+/israel-public-transportation-parquet/
+/israel-public-transportation.zip
+
+# Local tooling state, logs, and credentials
+/.playwright-mcp/
+/.vscode/
+**/*.log
+**/*.err
+.env
+.env.*
+!.env.example
