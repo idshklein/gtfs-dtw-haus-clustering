@@ -1,3 +1,5 @@
+import { browserSupportError, installClientErrorHandlers } from './browser-support.mjs';
+
 const $ = (id) => document.getElementById(id);
 const TYPE_NAMES = { 0: 'רכבת קלה', 2: 'רכבת', 3: 'אוטובוס', 5: 'רכבל', 8: 'מעלית', 715: 'לפי דרישה' };
 const typeName = (t) => (TYPE_NAMES[t] ? `${t} · ${TYPE_NAMES[t]}` : String(t));
@@ -16,6 +18,9 @@ const S = { meta: null, service: null, samples: [], points: [], coordinates: [],
 
 // ---------- setup ----------
 async function init() {
+  const compatibilityError = browserSupportError();
+  if (compatibilityError) throw new Error(compatibilityError);
+
   const manifestUrl = document.querySelector('meta[name="gtfs-manifest"]')?.content;
   if (!manifestUrl) throw new Error('לא הוגדרה כתובת manifest לנתוני GTFS');
   const hardwareCores = Math.max(1, Math.floor(Number(navigator.hardwareConcurrency) || 1));
@@ -1145,6 +1150,8 @@ if ($('profileClipOutliers')) {
     if (S.profiles && S.result) renderClusterFacets();
   };
 }
+
+installClientErrorHandlers({ statusElement: $('statusLine') });
 
 init().catch((error) => {
   $('runDtw').disabled = true;

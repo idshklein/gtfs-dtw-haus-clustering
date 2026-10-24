@@ -137,6 +137,12 @@ DuckDB-Wasm טוען בזמן ריצה את הרחבת Parquet מ־`https://exte
 
 להעלאת snapshot נתונים לאתר Netlify נפרד, הגדירו `GTFS_PARQUET_DIR` אם הקבצים אינם בתיקיית ברירת המחדל `../israel-public-transportation-parquet`, ואז הריצו `npm run build:netlify-data`. הפקודה מעתיקה את ששת קובצי ה-Parquet הנדרשים ל-`data-deploy`, מחשבת מזהה snapshot מתוכן הקבצים וכותבת `manifest.json` וכותרות CORS/cache. העלו את `data-deploy` לאתר נתונים ייעודי באמצעות `netlify deploy --dir data-deploy --prod --site <DATA_SITE_ID>`, ואז הגדירו באתר האפליקציה `GTFS_MANIFEST_URL` לכתובת `https://<data-site>/manifest.json`. הנתונים באתר זה ציבוריים; יש לוודא רישיון/הרשאת הפצה ולנטר נפח תעבורה. יש לפרוס מחדש את snapshot הנתונים כשמעדכנים אותם.
 
+### תאימות דפדפן ודיווח שגיאות מקומי
+
+היעד שנבדק הוא Chrome ב-Windows 11; Edge אינו נכלל במטריצת הבדיקות. לפני טעינת הנתונים האפליקציה בודקת זמינות `fetch`,‏ Web Workers,‏ WebAssembly,‏ IndexedDB ו-Cache Storage. אם תכונה נדרשת חסרה, הטעינה נעצרת ומוצגת הודעת אי-תאימות בעברית.
+
+שגיאות JavaScript לא מטופלות ודחיות Promise מוצגות כהודעה כללית בממשק, והפרטים נרשמים ב-console המקומי של הדפדפן. לא נשלח telemetry ולא נאסף מידע משתמש לשירות חיצוני; ניטור מרכזי של שגיאות לקוח אינו מוגדר.
+
 #### אתרי staging נוכחיים ו-rollback
 
 - אפליקציה: https://gtfs-dtw-haus-clustering.netlify.app/
@@ -144,7 +150,7 @@ DuckDB-Wasm טוען בזמן ריצה את הרחבת Parquet מ־`https://exte
 - Manifest: https://gtfs-dtw-haus-data.netlify.app/manifest.json
 - Snapshot נוכחי: `sha256-7a07a0c4ce32bde0eaf74af2c277b5320272ab2c27bd451c8b4ba58b52d38865`
 
-האתר הציבורי מציג את העותק המקומי שהועלה כ-snapshot. מקור הנתונים, רישיון/הרשאת ההפצה ועדכניות הקבצים טרם אומתו; אין לפרש את הצלחת ההגשה כבדיקת מקור או אישור פרסום. עדכון הנתונים הוא ידני: לבנות מחדש עם `npm run build:netlify-data`, לפרוס את `data-deploy` לאתר הנתונים, ולוודא את המזהה החדש ב-manifest. קובצי Parquet לא נשמרים ב-GitHub.
+האתר הציבורי מציג את העותק המקומי שהועלה כ-snapshot. תנאי השימוש הרשמיים של משרד התחבורה ([תנאי שימוש](https://asoc.mot.gov.il/terms.aspx), [קובץ GTFS](https://gtfs.mot.gov.il/gtfsfiles/israel-public-transportation.zip)) קובעים שאין להעתיק, להפיץ או לפרסם חומר מוגן ללא הסכמה כתובה מראש. המשתמש אישר שיש בידיו הסכמה, אך מקור הקבצים והיקף/מסמך ההרשאה טרם תועדו. אין לפרש את הצלחת ההגשה כאימות מקור או היקף ההרשאה, ואין לעדכן או לפרוס snapshot נוסף עד לתיעודם. תהליך העדכון הטכני ידני: לבנות מחדש עם `npm run build:netlify-data`, לפרוס את `data-deploy` לאתר הנתונים ולוודא את המזהה החדש ב-manifest. קובצי Parquet לא נשמרים ב-GitHub.
 
 ל-rollback של האפליקציה, ב-Netlify פותחים את רשימת ה-deploys של אתר האפליקציה ומפרסמים מחדש deploy קודם שאומת. לאחר אימות, ניתן לפרסם מחדש את deploy ה-`main` הרצוי. בדיקת staging כללה מעבר לפריסה קודמת וחזרה ל-deploy המחובר ל-GitHub, ולאחר מכן טעינת הנתונים אומתה מחדש. יש להתייחס ל-rollback של אתר הנתונים בנפרד: יש לפרסם מחדש deploy נתונים קודם רק כאשר ידוע שהאפליקציה וה-manifest תואמים לאותה גרסת snapshot.
 
@@ -154,7 +160,7 @@ DuckDB-Wasm טוען בזמן ריצה את הרחבת Parquet מ־`https://exte
 
 ב־VM של 4 vCPU ו־8GiB, Chrome 155 הריץ דרך ה־Workers את כל זוגות הדגימות: `route` — 6,629 דגימות ו־21,968,506 זוגות; `pattern` — 6,883 דגימות ו־23,684,403 זוגות. שתי ההרצות עברו (`acceptancePass`, `responsive`, `memoryPass`), השלימו את כל הזוגות, ולא דיווחו על שגיאות console או Long Tasks. שיא PSS היה 1,948.9MiB ב־route ו־1,970.2MiB ב־pattern, מתחת ליעד 2.5GiB; heartbeat מרבי היה 148.6ms ו־173ms. אלו בדיקות Workers עם fixture מקומי ולא בדיקת רשת ייצור או עומס מלא דרך הממשק.
 
-ב-staging הציבורי של Netlify נבדקו HTTPS, CORS וטעינת ה-snapshot המתארח, וכן חישוב מרחקים/MDS ואשכולות על 1,376 קווי Egged, שיתוף, קלט DBSCAN לא תקין, כשל manifest ו-rollback. אין בכך אימות של מקור Parquet upstream או של רישיון/עדכניות הנתונים. בדיקת Edge 155 אינה מאומתת; ניסיונות headless לא הראו טעינת נתונים ו-WebDriver אינו מותקן. לא הוגדר telemetry מתמשך ל-JavaScript; שגיאות רשת הוצגו למשתמש ונבדקו ב-console. מטריצת תרחישי Gate 6 המלאה בפריסה, ניטור לקוח ואימות המקור/הרשאה עדיין פתוחים.
+ב-staging הציבורי נבדקו HTTPS, CORS, טעינת נתונים, כל שבעת המדדים ל-11 דגימות route ול-11 תבניות, WMHD/CPU ו-WebGPU ל-1,376 קווים, k-medoids אוטומטי, חיתוכי `k`/`h`/מידע, שונות MDS, מתאמים, דנדוגרמה, שיתוף, ביטול חישוב מלא, חיפוש, פרופילים ומפה. נבדקו גם קלט DBSCAN לא תקין, כשל manifest ו-rollback. Chrome 155/Windows 11 הוא פרופיל היעד; Edge הוסר לפי החלטת המשתמש. ניטור השגיאות הוא מקומי בלבד: הודעה כללית ו-console, ללא telemetry חיצוני. המשתמש אישר שיש בידיו הסכמה כתובה לפרסום, אך מקור הנתונים ומסמך/היקף ההרשאה טרם תועדו; אין לרענן או לפרוס snapshot נוסף עד לתיעודם.
 
 לבדיקת גישה cross-origin מול snapshot ה־Parquet המקומי (שרת fixture בלבד; אינו מחליף אימות מול מקור הייצור), מפעילים בחלון PowerShell נפרד:
 
