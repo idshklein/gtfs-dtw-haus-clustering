@@ -1754,6 +1754,7 @@ document.querySelectorAll('.cluster-view-tabs [data-cluster-view]').forEach((but
 function activateTab(name) {
   document.querySelectorAll('.tabs button').forEach((button) => button.classList.toggle('active', button.dataset.tab === name));
   $('tab-clusters').hidden = name !== 'clusters';
+  $('tab-methodology-notes').hidden = name !== 'methodology-notes';
   if ($('tab-methodology')) $('tab-methodology').hidden = name !== 'methodology';
   $('tab-map').hidden = name !== 'map';
   $('tab-data').hidden = name !== 'data';
